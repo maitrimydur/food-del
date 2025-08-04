@@ -20,6 +20,12 @@ const List = () => {
     }
   }
 
+  const removeFood = async(foodId) => {
+    const _response = await axios.post('/api/food/remove', { id: foodId })
+    await fetchList();
+
+  }
+
   useEffect(() => {
     fetchList()
   }, [])
@@ -41,7 +47,7 @@ const List = () => {
             <p>{item.name}</p>
             <p>{item.category}</p>
             <p>${item.price}</p>
-            <p>X</p>
+            <p onClick={()=>removeFood(item.id)} className='cursor'>X</p>
           </div>
         ))}
       </div>
