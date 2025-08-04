@@ -1,0 +1,7 @@
+/* Ensure images actually show up */
+.list-table-format img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 150px;  /* or whatever makes sense */
+}
