@@ -4,36 +4,43 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs/promises'
 
-// ══ ES module __dirname polyfill ══
+// ══ Polyfill __dirname in ES modules ══
 const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+const __dirname  = path.dirname(__filename)
 
 const app = express()
 app.use(cors())
 app.use(express.json())
 
-// ── 1. Serve static images from server/images ──
+// ── Serve static images from server/images ──
 const imagesDir = path.join(__dirname, 'images')
 app.use('/images', express.static(imagesDir))
 
-// ── 2. On startup, read all .png files and build your data list ──
-const allImages = await fs.readdir(imagesDir)
-const foodItems = allImages
-  .filter((f) => /\.png$/i.test(f))
-  .map((file, idx) => ({
-    // Derive a name from the filename (e.g. "food_1")
-    name: path.parse(file).name.replace(/_/g, ' '), 
-    // TODO: swap in real categories/prices or keep defaults here
-    category: 'Uncategorized',
-    price: 5.0 + idx * 0.5,  
-    image: file,
-  }))
+// ── Build your food list from all .png files ──
+async function loadFoodList() {
+  const files = await fs.readdir(imagesDir)
+  return files
+    .filter(f => /\.png$/i.test(f))
+    .map((file, i) => ({
+      // You can tweak name/category/price as you wish!
+      name: file.replace(/_/g, ' ').replace(/\.png$/i, ''),
+      category: 'Uncategorized',
+      price: 5 + i * 0.5,
+      image: file,
+    }))
+}
 
-// ── 3. API endpoint returns all your images as list items ──
-app.get('/api/food/list', (req, res) => {
-  res.json({ success: true, data: foodItems })
+app.get('/api/food/list', async (req, res) => {
+  try {
+    const data = await loadFoodList()
+    res.json({ success: true, data })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ success: false, error: 'Could not load food list' })
+  }
 })
 
-app.listen(4000, () => {
-  console.log('API server listening on http://localhost:4000')
+const PORT = 4000
+app.listen(PORT, () => {
+  console.log(`API server listening on http://localhost:${PORT}`)
 })
