@@ -4,6 +4,8 @@ import axios from 'axios'
 import { toast } from 'react-toastify'
 
 const List = () => {
+
+  const _url = "http://localhost:4000"
   const [list, setList] = useState([])
 
   const fetchList = async () => {
@@ -23,7 +25,12 @@ const List = () => {
   const removeFood = async(foodId) => {
     const _response = await axios.post('/api/food/remove', { id: foodId })
     await fetchList();
-
+    if (_response.data.success) {
+      toast.success(_response.data.message)
+    }
+    else {
+      toast.error("Error");
+    }
   }
 
   useEffect(() => {
