@@ -4,9 +4,8 @@ import { assets } from '../../assets/assets'
 import axios from "axios"
 import { toast } from 'react-toastify'
 
-const Add = () => {
+const Add = ({url}) => {
 
-    const url = "http://localhost:4000";
     const [_image,_setImage] = useState(false);
     const [_data,_setData] = useState({
         name:"",
