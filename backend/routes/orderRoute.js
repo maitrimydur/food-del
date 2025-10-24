@@ -1,11 +1,8 @@
-import express from "express"
-import authMiddleware from "../middleware/auth.js"
-import { placeOrder } from "../controllers/orderController.js"
+const router = require('express').Router();
+const auth = require('../middleware/auth');
+const ctrl = require('../controllers/orderController');
 
-const orderRouter = express.Router();
+router.post('/', auth, ctrl.create);
+router.get('/mine', auth, ctrl.mine);
 
-orderRouter.post("/place",authMiddleware,placeOrder);
-orderRouter.post("/verify",verifyOrder);
-
-
-export default orderRouter;
+module.exports = router;

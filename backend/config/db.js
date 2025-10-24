@@ -1,5 +1,9 @@
-import mongoose from "mongoose";
+const mongoose = require('mongoose');
 
-export const connectDB = async () => {
-    await mongoose.connect('mongodb+srv://maitrimydur:sHsWjWdzhRAUrrtr@cluster0.sylbqtq.mongodb.net/food-del').then(()=>console.log("DB Connected"));
-}
+module.exports = async function connectDB() {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) throw new Error('MONGODB_URI missing in .env');
+  mongoose.set('strictQuery', true);
+  await mongoose.connect(uri);
+  console.log('MongoDB connected');
+};

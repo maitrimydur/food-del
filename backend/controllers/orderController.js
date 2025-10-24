@@ -1,76 +1,30 @@
-import orderModel from "../models/orderMode.js";
-import userModel from '../models/userModel.js'
-import Stripe from "stripe"
+const User = require('../models/User');
+const Food = require('../models/Food');
+const Order = require('../models/Order');
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+exports.create = async (req, res) => {
+  const { items } = req.body; // [{foodId, qty}]
+  if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ message: 'No items' });
 
-// placing user order for frontend
-const placeOrder = async (req,res) =>{
+  const foods = await Food.find({ _id: { $in: items.map(i => i.foodId) } });
+  const itemsDetailed = items.map(i => {
+    const f = foods.find(x => String(x._id) === i.foodId);
+    if (!f) throw new Error('Food not found');
+    return { food: f._id, qty: i.qty, price: f.price };
+  });
 
-    const frontend_url = "http://localhost:5173"
+  const amount = itemsDetailed.reduce((sum, i) => sum + i.price * i.qty, 0);
 
-    try {
-        const newOrder = new orderModel({
-            userId:req.body.userId,
-            items:req.body.items,
-            amount:req.body.amount,
-            address:req.body.address
-        })
-        await newOrder.save();
-        await userModel.findByIdAndUpdate(req.body.userId,{cartData:{}});
+  const order = await Order.create({
+    user: req.userId,
+    items: itemsDetailed,
+    amount
+  });
 
-        const line_items = req.body.items.map((item)=>({
-            price_data:{
-                currency:"inr",
-                product_data:{
-                    name:item.name
-                },
-                unit_amount:item.price*100*80
-            },
-            quantity:item.quantity
-        }))
+  res.json({ orderId: order._id, amount });
+};
 
-        line_items.push({
-            price_data:{
-                currency:"inr",
-                product_data:{
-                    name:"Delivery Charges"
-                },
-                unit_amount:2*100*80
-            },
-            quantity:1
-        })
-
-        const session = await stripe.checkout.sessions.create({
-            line_items:line_items,
-            mode:'payment',
-            success_url:`${frontend_url}/verify?success=true&orderId=${newOrder._id}`,
-            cancel_url:`${frontend_url}/verify?success=false&orderId=${newOrder._id}`,
-        })
-
-        res.json({success:true,session_url:session.url})
-
-    } catch (error) {
-        console.log(error);
-        res.json({success:false,message:"Error"})
-    }
-}
-
-const verifyOrder = async (req,res) => {
-    const {orderId,success} = req.body;
-    try {
-        if (success="true") {
-            await orderModel.findByIdAndUpdate(orderId,{payment:true});
-            res.json({success:true,message:"Paid"})
-        }
-        else {
-            await orderModel.findByIdAndUpdate(orderId);
-            res.json({success:falsse,message:"Not Paid"})
-        }
-    } catch (error) {
-        console.log(error);
-        res.json({success:false,message:"Error"})
-    }
-}
-
-export {placeOrder,verifyOrder}
+exports.mine = async (req, res) => {
+  const orders = await Order.find({ user: req.userId }).sort({ createdAt: -1 }).populate('items.food', 'name image');
+  res.json(orders);
+};
