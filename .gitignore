@@ -5,3 +5,12 @@
 backend/.env
 frontend/.env
 admin/.env
+
+.env
+.env.*
+backend/.env
+frontend/.env
+admin/.env
+
+node_modules/
+**/node_modules/
