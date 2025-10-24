@@ -17,3 +17,9 @@ admin/.env
 backend/.env
 frontend/.env
 admin/.env
+
+.env
+.env.*
+backend/.env
+frontend/.env
+admin/.env
